@@ -32,6 +32,8 @@ export const register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         })
 
+        return res.json({ message: "Registration successful", success: true });
+
     } catch (error) {
         res.status(400).json({ message: error.message, success: false });
     }

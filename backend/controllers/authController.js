@@ -165,3 +165,13 @@ export const verifyEmail = async (req, res) => {
     }
 };
 
+// USER IS AUTHENTICATED
+
+export const isAuthenticated = async (req, res) => {
+    try {
+        return res.json({ message: "User is authenticated", success: true });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message, success: false });
+    }
+}

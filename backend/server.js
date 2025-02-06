@@ -4,6 +4,7 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import authRouter from './routes/authRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -26,6 +27,7 @@ app.get('/', (req, res) => {
 
 // Authentication Routes (Register, Login, Logout)
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 // Start the Server
 app.listen(port, () => {

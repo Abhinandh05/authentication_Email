@@ -1,10 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
+import transporter from "../config/nodemailer.js";
 
 export const register = async (req, res) => {
-
-
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -17,30 +16,37 @@ export const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Email already exists", success: false });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new userModel({ name, email, password: hashedPassword });
         await user.save();
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production",
-            'none': 'strict',
-
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000
-        })
+        });
 
-        return res.json({ message: "Registration successful", success: true }); 
+        // Sending welcome email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,  // ✅ Fixed "form" → "from"
+            to: email,
+            subject: "Welcome to My Website",
+            text: `Welcome to my channel! Your account has been created with the email: ${email}`,
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        return res.json({ message: "Registration successful", success: true });
 
     } catch (error) {
-        res.status(400).json({ message: error.message, success: false });
+        res.status(500).json({ message: error.message, success: false });
     }
-
-
-
-}
+};
 
 export const login = async (req, res) => {
     const { email, password } = req.body;
@@ -63,36 +69,32 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production",
-            'none': 'strict',
-
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000
-        })
+        });
 
         return res.json({ message: "Login successful", success: true });
 
     } catch (error) {
-        res.status(400).json({ message: error.message, success: false });
+        res.status(500).json({ message: error.message, success: false });
     }
-}
+};
 
 export const logout = async (req, res) => {
     try {
         res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production",
-            'none': 'strict',
+            sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+        });
 
-        })
         return res.json({ message: "Logged out successfully", success: true });
-        
-    } catch (error) {
-        res.status(400).json({ message: error.message, success: false });
-    }
-   
 
-}
+    } catch (error) {
+        res.status(500).json({ message: error.message, success: false });
+    }
+};
